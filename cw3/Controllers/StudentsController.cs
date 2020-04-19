@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using cw3.DAL;
 using cw3.Models;
+using cw3.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,63 +15,121 @@ namespace cw3.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private readonly IDbService _dbService;
+        private const string ConString = "Data Source=db-mssql;Initial Catalog=s17654;Integrated Security=True";
 
-        public StudentsController(IDbService dbService)
-        {
-            _dbService = dbService;
-        }
-
+        //Zadanie 4.1, 4.2 ,4.5
         [HttpGet]
-        public IActionResult GetStudents(string orderBy)
+        public IActionResult GetStudents()
         {
-            return Ok(_dbService.GetStudents());
-        }
-
-        //[HttpGet]
-        //public string GetStudent()
-        //{
-        //    return "Kowalski, Malewski, Andrzejewski";
-        //}
-
-        [HttpGet("{id}")]
-        public IActionResult GetStudents(int id)
-        {
-            if (id == 1)
+            var list = new List<Student>();
+            using (SqlConnection con = new SqlConnection(ConString))
+            using (SqlCommand com = new SqlCommand())
             {
-                return Ok("Kowalski");
+                com.Connection = con;
+                com.CommandText = "select * from students";
+
+                con.Open();
+                SqlDataReader dr = com.ExecuteReader();
+                while (dr.Read())
+                {
+                    var st = new Student();
+                    st.IndexNumber = dr["IndexNumber"].ToString();
+                    st.FirstName = dr["FirstName"].ToString();
+                    st.LastName = dr["LastName"].ToString();
+                    list.Add(st);
+                }
             }
-            else if (id == 2)
+            return Ok(list);
+        }
+
+        //Zadanie 4.3
+        [HttpGet("{indexNumber}")]
+        public IActionResult GetEnrollments(string indexNumber)
+        {
+            var list = new List<Enrollment>();
+            using (SqlConnection con = new SqlConnection(ConString))
+            using (SqlCommand com = new SqlCommand())
             {
-                return Ok("Malewski");
+                com.Connection = con;
+                com.CommandText = "select * from Enrollment e join student s on s.IdEnrollment=e.IdEnrollment where s.IndexNumber=@index";
+                com.Parameters.AddWithValue("index", indexNumber);
+
+                con.Open();
+                var dr = com.ExecuteReader();
+                while (dr.Read())
+                {
+                    var en = new Enrollment();
+                    en.IdEnrollment = int.Parse(dr["IdEnrollment"].ToString());
+                    en.Semester = int.Parse(dr["Semester"].ToString());
+                    en.StartDate = DateTime.Parse(dr["StartDate"].ToString());
+                    list.Add(en);
+                }
             }
-
-            return NotFound("Nie znaleziono studenta");
+            return Ok(list);
         }
 
-        //[HttpGet]
-        //public string GetStudents(string orderBy)
-        //{
-        //    return $"Kowalski, Malewski, Andrzejewski sortowanie={orderBy}";
-        //}
+        //**********************************************//
+        //**  PONIŻEJ WYKOMENTOWANY KOD Z CWICZEN 3   **//
+        //**********************************************//
 
-        [HttpPost]
-        public IActionResult CreateStudent(Student student)
-        {
-            student.IndexNumber = $"s{new Random().Next(1, 20000)}";
-            return Ok(student);
-        }
 
-        [HttpPut("{id}")]
-        public IActionResult updateStudent(int id)
-        {
-            return Ok("Aktualizacja dokończona");
-        }
+        //    private readonly IDbService _dbService;
 
-        [HttpPut("{id}")]
-        public IActionResult deleteStudent(int id)
-        {
-            return Ok("Usuwanie zakończone");
-        }
+        //    public StudentsController(IDbService dbService)
+        //    {
+        //        _dbService = dbService;
+        //    }
+
+        //    [HttpGet]
+        //    public IActionResult GetStudents(string orderBy)
+        //    {
+        //        return Ok(_dbService.GetStudents());
+        //    }
+
+        //    //[HttpGet]
+        //    //public string GetStudent()
+        //    //{
+        //    //    return "Kowalski, Malewski, Andrzejewski";
+        //    //}
+
+        //    [HttpGet("{id}")]
+        //    public IActionResult GetStudents(int id)
+        //    {
+        //        if (id == 1)
+        //        {
+        //            return Ok("Kowalski");
+        //        }
+        //        else if (id == 2)
+        //        {
+        //            return Ok("Malewski");
+        //        }
+
+        //        return NotFound("Nie znaleziono studenta");
+        //    }
+
+        //    //[HttpGet]
+        //    //public string GetStudents(string orderBy)
+        //    //{
+        //    //    return $"Kowalski, Malewski, Andrzejewski sortowanie={orderBy}";
+        //    //}
+
+        //    [HttpPost]
+        //    public IActionResult CreateStudent(Student student)
+        //    {
+        //        student.IndexNumber = $"s{new Random().Next(1, 20000)}";
+        //        return Ok(student);
+        //    }
+
+        //    [HttpPut("{id}")]
+        //    public IActionResult updateStudent(int id)
+        //    {
+        //        return Ok("Aktualizacja dokończona");
+        //    }
+
+        //    [HttpPut("{id}")]
+        //    public IActionResult deleteStudent(int id)
+        //    {
+        //        return Ok("Usuwanie zakończone");
+        //    }
     }
 }
