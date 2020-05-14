@@ -10,8 +10,7 @@ namespace cw3.Services
     {
         public bool PromoteStudent(PromoteStudentRequest promoteStudentRequest)
         {
-            using (var connection =
-                new SqlConnection("Data Source=db-mssql;Initial Catalog=s17082;Integrated Security=True"))
+            using (var connection = new SqlConnection(Program.ConString))
             using (var command = new SqlCommand())
             {
                 command.Connection = connection;
@@ -88,7 +87,7 @@ namespace cw3.Services
 
             DateTime enrollmentStartDate = DateTime.Now;
 
-            using (var connection = new SqlConnection("Data Source=db-mssql;Initial Catalog=s17082;Integrated Security=True"))
+            using (var connection = new SqlConnection(Program.ConString))
             using (var command = new SqlCommand())
             {
                 command.Connection = connection;
@@ -191,7 +190,7 @@ namespace cw3.Services
 
         public Study GetStudy(string studyName)
         {
-            using (var connection = new SqlConnection("Data Source=db-mssql;Initial Catalog=s17082;Integrated Security=True"))
+            using (var connection = new SqlConnection(Program.ConString))
             using (var command = new SqlCommand())
             {
                 command.Connection = connection;
