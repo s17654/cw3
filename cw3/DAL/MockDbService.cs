@@ -20,6 +20,11 @@ namespace cw3.DAL
             };
         }
 
+        public Student GetStudent(string indexNumber)
+        {
+            throw new NotImplementedException();
+        }
+
         public IEnumerable<Enrollment> GetStudentEnrollment(string studentId)
         {
             throw new NotImplementedException();

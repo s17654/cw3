@@ -8,6 +8,46 @@ namespace cw3.DAL
 {
     public class DbService : IDbService
     {
+        public Student GetStudent(String indexNumber)
+        {
+            Student student = new Student();
+
+            try
+            {
+                using (var connection = new SqlConnection(Program.ConString))
+                using (var command = new SqlCommand())
+                {
+                    command.Connection = connection;
+
+                    command.CommandText = "SELECT * FROM STUDENT WHERE IndexNumber = @indexNumber";
+                    command.Parameters.AddWithValue("indexNumber", indexNumber);
+
+                    connection.Open();
+
+                    var reader = command.ExecuteReader();
+
+                    if (!reader.Read())
+                    {
+                        return null;
+                    }
+
+                    student.FirstName = reader["FirstName"].ToString();
+                    student.LastName = reader["LastName"].ToString();
+                    student.IndexNumber = reader["IndexNumber"].ToString();
+                    student.Birthday = (DateTime)reader["BirthDate"];
+
+                    connection.Close();
+                }
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine(exception);
+                return null;
+            }
+
+            return student;
+        }
+
         public IEnumerable<Student> GetStudents()
         {
             List<Student> students = new List<Student>();
