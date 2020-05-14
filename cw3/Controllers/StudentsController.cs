@@ -15,14 +15,13 @@ namespace cw3.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
-        private const string ConString = "Data Source=db-mssql;Initial Catalog=s17654;Integrated Security=True";
 
         //Zadanie 4.1, 4.2 ,4.5
         [HttpGet]
         public IActionResult GetStudents()
         {
             var list = new List<Student>();
-            using (SqlConnection con = new SqlConnection(ConString))
+            using (SqlConnection con = new SqlConnection(Program.ConString))
             using (SqlCommand com = new SqlCommand())
             {
                 com.Connection = con;
@@ -47,7 +46,7 @@ namespace cw3.Controllers
         public IActionResult GetEnrollments(string indexNumber)
         {
             var list = new List<Enrollment>();
-            using (SqlConnection con = new SqlConnection(ConString))
+            using (SqlConnection con = new SqlConnection(Program.ConString))
             using (SqlCommand com = new SqlCommand())
             {
                 com.Connection = con;

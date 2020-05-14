@@ -11,6 +11,8 @@ namespace cw3
 {
     public class Program
     {
+        public const string ConString = "Data Source=db-mssql;Initial Catalog=s17654;Integrated Security=True";
+
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
