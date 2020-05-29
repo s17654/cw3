@@ -13,5 +13,11 @@ namespace cw3.Services
         public bool PromoteStudent(PromoteStudentRequest promoteStudentRequest);
         public StudentEnrollment EnrollStudent(EnrollStudentRequest enrollStudentRequest);
         public Study GetStudy(string studyName);
+        public Student GetStudent(string indexNumber, string password);
+        public Student GetRefreshTokenOwner(string refreshToken);
+        public int CreateRefreshToken(RefreshToken refreshToken);
+        public int DeleteRefreshToken(string refreshToken);
+
+
     }
 }

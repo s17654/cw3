@@ -1,13 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using cw3.DAL;
+using cw3.DTDs.Requests;
+using cw3.DTDs.Responses;
 using cw3.Models;
 using cw3.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 
 namespace cw3.Controllers
 {
@@ -15,6 +23,110 @@ namespace cw3.Controllers
     [ApiController]
     public class StudentsController : ControllerBase
     {
+        private readonly IStudentsDbService _dbService;
+        private readonly IConfiguration _configuration;
+
+        public StudentsController(IStudentsDbService dbService, IConfiguration configuration)
+        {
+            _dbService = dbService;
+            _configuration = configuration;
+        }
+
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public IActionResult Login(LoginRequest request)
+        {
+            var student = _dbService.GetStudent(request.Username, request.Password);
+            if (student == null)
+                return NotFound(new ErrorResponse
+                {
+                    Message = "Username or password dosen't exists or is incorrect."
+                });
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, student.IndexNumber),
+                new Claim(ClaimTypes.Name, student.FirstName + "_" + student.LastName),
+                new Claim(ClaimTypes.Role, "student")
+            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["SecretKey"]));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken
+            (
+                issuer: "s17654",
+                audience: "Students",
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(10),
+                signingCredentials: credentials
+            );
+            var response = new LoginResponse
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                RefreshToken = Guid.NewGuid().ToString()
+            };
+            if (_dbService.CreateRefreshToken(
+                new RefreshToken { Id = response.RefreshToken, IndexNumber = student.IndexNumber }) > 0)
+                return Ok(response);
+            else
+                return StatusCode(500, new ErrorResponse
+                {
+                    Message = "Error during post authorization"
+                });
+        }
+
+        [HttpPost("refresh-token/{refreshToken}")]
+        [AllowAnonymous]
+        public IActionResult RefreshToken(string refreshToken)
+        {
+            var student = _dbService.GetRefreshTokenOwner(refreshToken);
+            if (student == null)
+                return NotFound(new ErrorResponse
+                {
+                    Message = "Refresh roken dosen't exists or is incorrect"
+                });
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, student.IndexNumber),
+                new Claim(ClaimTypes.Name, student.FirstName + "_" + student.LastName),
+                new Claim(ClaimTypes.Role, "student")
+            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["SecretKey"]));
+            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken
+            (
+                issuer: "s16556",
+                audience: "Students",
+                claims: claims,
+                expires: DateTime.Now.AddMinutes(10),
+                signingCredentials: credentials
+            );
+            var response = new LoginResponse
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                RefreshToken = Guid.NewGuid().ToString()
+            };
+            if (_dbService.CreateRefreshToken(
+                new RefreshToken
+                {
+                    Id = response.RefreshToken,
+                    IndexNumber = student.IndexNumber
+                }) == 0)
+                return StatusCode(500, new ErrorResponse
+                {
+                    Message = "Error during post authorization"
+                });
+
+            if (_dbService.DeleteRefreshToken(refreshToken) == 0)
+                return StatusCode(500, new ErrorResponse
+                {
+                    Message = "Error during post authorization"
+                });
+            return Ok(response);
+        }
+
 
         //Zadanie 4.1, 4.2 ,4.5
         [HttpGet]

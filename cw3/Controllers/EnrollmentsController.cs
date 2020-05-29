@@ -8,6 +8,8 @@ using cw3.DTDs.Requests;
 using cw3.DTDs.Responses;
 using cw3.Models;
 using cw3.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +17,7 @@ namespace cw3.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "employee")]
     public class EnrollmentsController : ControllerBase
     {
         private readonly IStudentsDbService _dbService;
@@ -35,6 +38,7 @@ namespace cw3.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "employee")]
         public IActionResult EnrollStudent(EnrollStudentRequest req)
         {
             StudentEnrollment se = this._dbService.EnrollStudent(req);

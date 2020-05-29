@@ -8,6 +8,168 @@ namespace cw3.Services
 {
     public class StudentsDbService : IStudentsDbService
     {
+        public int CreateRefreshToken(RefreshToken refreshToken)
+        {
+            using (var connection = new SqlConnection(Program.ConString))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                command.Connection.Open();
+
+                command.Transaction = command.Connection.BeginTransaction();
+
+                try
+                {
+                    command.CommandText = "INSERT INTO RefreshToken " + "VALUES(@id, @indexNumber)";
+                    command.Parameters.AddWithValue("id", refreshToken.Id);
+                    command.Parameters.AddWithValue("indexNumber", refreshToken.IndexNumber);
+                    connection.Open();
+                    return command.ExecuteNonQuery();
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    command.Transaction.Rollback();
+                    return -1;
+                }
+            }
+        }
+
+        public int DeleteRefreshToken(string refreshToken)
+        {
+            using (var connection = new SqlConnection(Program.ConString))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                command.Connection.Open();
+                command.Transaction = command.Connection.BeginTransaction();
+
+                try
+                {
+                    command.CommandText = "DELETE FROM RefreshToken WHERE Id = @refreshToken";
+                    command.Parameters.AddWithValue("refreshToken", refreshToken);
+                    connection.Open();
+                    return command.ExecuteNonQuery();
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    command.Transaction.Rollback();
+                    return -1;
+                }
+            }
+        }
+
+        public Student GetRefreshTokenOwner(string refreshToken)
+        {
+            using (var connection = new SqlConnection(Program.ConString))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                command.Connection.Open();
+                command.Transaction = command.Connection.BeginTransaction();
+                try
+                {
+                    command.CommandText = "SELECT * FROM RefreshToken WHERE Id = @refreshToken";
+                    command.Parameters.AddWithValue("refreshToken", refreshToken);
+                    connection.Open();
+                    using var dataReader = command.ExecuteReader();
+                    if (dataReader.Read())
+                    {
+                        var refreshTokenModel = new RefreshToken
+                        {
+                            Id = dataReader["Id"].ToString(),
+                            IndexNumber = dataReader["IndexNumber"].ToString()
+                        };
+                        return GetStudent(refreshTokenModel.IndexNumber);
+                    }
+                    return null;
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    command.Transaction.Rollback();
+                    return null;
+                }
+            }
+        }
+
+        public Student GetStudent(string indexNumber)
+        {
+            using (var connection = new SqlConnection(Program.ConString))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                command.Connection.Open();
+                command.Transaction = command.Connection.BeginTransaction();
+                try
+                {
+                    command.CommandText = "SELECT * FROM Student WHERE IndexNumber = @indexNumber";
+                    command.Parameters.AddWithValue("indexNumber", indexNumber);
+                    connection.Open();
+                    using var dataReader = command.ExecuteReader();
+                    if (dataReader.Read())
+                    {
+                        var student = new Student
+                        {
+                            IndexNumber = dataReader["IndexNumber"].ToString(),
+                            FirstName = dataReader["FirstName"].ToString(),
+                            LastName = dataReader["LastName"].ToString(),
+                            Birthday = DateTime.Parse(dataReader["BirthDate"].ToString())
+                        };
+                        return student;
+                    }
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    command.Transaction.Rollback();
+                    return null;
+                }
+                return null;
+            }
+        }        
+
+        public Student GetStudent(string indexNumber, string password)
+        {
+            using (var connection = new SqlConnection(Program.ConString))
+            using (var command = new SqlCommand())
+            {
+                command.Connection = connection;
+                command.Connection.Open();
+
+                command.Transaction = command.Connection.BeginTransaction();
+
+                try
+                {
+                    command.CommandText =
+                        "SELECT * FROM Student WHERE IndexNumber = @indexNumber AND Password = @password";
+                    command.Parameters.AddWithValue("indexNumber", indexNumber);
+                    command.Parameters.AddWithValue("password", password);
+                    connection.Open();
+                    using var dataReader = command.ExecuteReader();
+                    if (dataReader.Read())
+                    {
+                        var student = new Student
+                        {
+                            IndexNumber = dataReader["IndexNumber"].ToString(),
+                            FirstName = dataReader["FirstName"].ToString(),
+                            LastName = dataReader["LastName"].ToString(),
+                            Birthday = DateTime.Parse(dataReader["BirthDate"].ToString()),
+                        };
+                        return student;
+                    }
+                }
+                catch (Exception error)
+                {
+                    Console.WriteLine(error);
+                    command.Transaction.Rollback();
+                    return null;
+                }
+                return null;
+            }
+        }
+
         public bool PromoteStudent(PromoteStudentRequest promoteStudentRequest)
         {
             using (var connection = new SqlConnection(Program.ConString))
